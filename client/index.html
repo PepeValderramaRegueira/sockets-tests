@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Sockets</title>
+</head>
+<body>
+
+  <form id="chat">
+    <div class="field">
+      <input type="text" id="user">
+      <label for="user">User</label>
+    </div>
+    <div class="field">
+      <input type="text" id="message">
+      <label for="message">Message</label>
+    </div>
+    <input type="submit" value="Send">
+  </form>
+
+  <div id="chat-output"></div>
+  
+  <script src="socket.io/socket.io.js"></script>
+  <script>
+    let socket = io()
+
+    const message = document.getElementById('message')
+    const user = document.getElementById('user')
+    const chatOutput = document.getElementById('chat-output')
+    const chat = document.getElementById("chat")
+
+    chat.addEventListener('submit', e => {
+      e.preventDefault()
+      console.log("Sending data")
+      socket.emit('message', {
+        message: message.value,
+        user: user.value
+      }, (response) => {
+        console.log("Server response:", response)
+      })
+    })
+
+    socket.on('connect', () => {
+      console.log('Connected')
+    })
+
+    socket.on('message', (data) => {
+      let messageContainerDOMEl = document.createElement('div')
+      let messageDOMEl = document.createElement('p')
+      let from = document.createElement('p')
+
+      messageDOMEl.textContent = data.message
+      from.textContent = data.user
+      messageContainerDOMEl.appendChild(from)
+      messageContainerDOMEl.appendChild(messageDOMEl)
+      chatOutput.appendChild(messageContainerDOMEl)
+    })
+
+    socket.on('i-see-you', (message) => {
+      console.log(message)
+    })
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected')
+    })
+
+    // Send information
+    socket.emit('greet', {greet: "Hello, I'am Pepe"})
+  </script>
+</body>
+</html>
