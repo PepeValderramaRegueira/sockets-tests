@@ -25,6 +25,10 @@
   max-width: 250px;
 }
 
+.message strong {
+  display: block;
+}
+
 .message:not(:last-child) {
   margin-bottom: .5rem;
 }

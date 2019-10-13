@@ -8,7 +8,8 @@ export default class Chat extends Component {
     this.socket = io("http://localhost:5001")
     this.state = {
       message: '',
-      messages: []
+      messages: [],
+      onlineUsers: []
     }
   }
   
@@ -16,6 +17,13 @@ export default class Chat extends Component {
     return (
       <section className="chat-section">
         <h1>This is the chat</h1>
+        <div className="online-users">
+          {
+            this.state.onlineUsers.length > 0
+              ? this.renderOnlineUsers()
+              : <p>There are no online users</p>
+          }
+        </div>
         <div className="chat">
           <div className="chat-messages">
             {
@@ -35,14 +43,51 @@ export default class Chat extends Component {
   }
 
   componentDidMount() {
-    this.socket.on('message', (data) => {
+    this.socket.emit('user-connect', {
+      name: this.props.match.params.user 
+    }, (currentOnlineUsers) => {
+      this.setState({
+        ...this.state,
+        onlineUsers: currentOnlineUsers
+      })
+    })
+    
+    this.socket.on('new-user-connected', (onlineUsers) => {
+      this.setState({
+        ...this.state,
+        onlineUsers: onlineUsers
+      })
+    })
+
+    this.socket.on('user-disconnected', (data) => {
+      console.log("The users that still online", data)
+      console.log("User disconnected:", data.disconnectedUser)
+      this.setState({
+        ...this.state,
+        onlineUsers: data.users
+      })
+    })
+
+    this.socket.on('message', (newMessage) => {
       let newMessages = [...this.state.messages]
-      newMessages.push(data)
+      newMessages.push(newMessage)
       this.setState({
         ...this.state,
         messages: newMessages
       })
     })
+  }
+
+  renderOnlineUsers() {
+    return (
+      <ul className="online-users">
+        {
+          this.state.onlineUsers.map((onlineUser, idx) => {
+            return <li key={idx}>{onlineUser.user.name}</li>
+          })
+        }
+      </ul>
+    )
   }
 
   renderNoMessages = () => {
@@ -54,11 +99,15 @@ export default class Chat extends Component {
   }
 
   renderMessages = () => {
+    console.log("THE MESSAGES", this.state.messages)
     return (
       this.state.messages.map((message, idx) => {
         return (
           <div className="message" key={idx}>
-            <p className="message-text">{message.message}</p>
+            <p className="message-text">
+              <strong>{message.user}</strong>
+              {message.text}
+            </p>
           </div>
         )
       })
@@ -76,7 +125,7 @@ export default class Chat extends Component {
     event.preventDefault()
     if (this.state.message.trim().length > 0) {
       this.socket.emit('message', {
-        message: this.state.message
+        text: this.state.message
       })
       this.setState({
         ...this.state,

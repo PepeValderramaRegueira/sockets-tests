@@ -20,7 +20,7 @@ export default class App extends Component {
           <Navbar />
           <Switch>
             <Route exact path="/" component={Home} />
-            <Route exact path="/chat" component={Chat} />
+            <Route exact path="/chat/:user" component={Chat} />
           </Switch>
         </div>
       </div>
